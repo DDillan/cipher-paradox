@@ -1,0 +1,439 @@
+/* =========================
+   BOOT SEQUENCE
+   terminal -> scan decrypts CIPHER -> panels split open onto the hero
+========================= */
+
+.boot {
+  position: fixed;
+  inset: 0;
+
+  z-index: 1000;
+
+  overflow: hidden;
+
+  color: var(--green);
+  font-family: var(--font-mono);
+
+  /* The panels are the opaque part, so the page can show through once they move */
+  background: transparent;
+}
+
+.boot.is-open {
+  pointer-events: none;
+}
+
+/* ---------- split panels ---------- */
+
+.boot-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+
+  /* slight overlap so no hairline shows at the seam */
+  height: 50.2%;
+
+  overflow: hidden;
+
+  background: #010402;
+
+  will-change: transform;
+
+  transition: transform 0.9s cubic-bezier(0.76, 0, 0.24, 1) 0.14s;
+}
+
+.boot-panel-top {
+  top: 0;
+}
+
+.boot-panel-bottom {
+  bottom: 0;
+}
+
+.boot.is-open .boot-panel-top {
+  transform: translate3d(0, -101%, 0);
+}
+
+.boot.is-open .boot-panel-bottom {
+  transform: translate3d(0, 101%, 0);
+}
+
+.boot-grid {
+  position: absolute;
+  inset: 0;
+
+  opacity: 0.5;
+
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent 55px,
+    rgba(0, 255, 65, 0.04) 56px
+  );
+}
+
+/* Bright seam that flashes where the panels part */
+
+.boot-seam {
+  position: absolute;
+
+  left: 0;
+  right: 0;
+  top: 50%;
+
+  height: 1px;
+
+  opacity: 0;
+
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--green) 20%,
+    var(--green) 80%,
+    transparent
+  );
+
+  box-shadow: 0 0 18px 2px rgba(0, 255, 65, 0.55);
+}
+
+.boot.is-open .boot-seam {
+  animation: seamFlash 0.75s ease-out forwards;
+}
+
+@keyframes seamFlash {
+  0% {
+    opacity: 1;
+    transform: scaleX(0.4);
+  }
+
+  30% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scaleX(1) scaleY(4);
+  }
+}
+
+/* ---------- stage (everything that sits on the panels) ---------- */
+
+.boot-stage {
+  position: absolute;
+  inset: 0;
+
+  transition:
+    opacity 0.28s ease,
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.boot.is-open .boot-stage {
+  opacity: 0;
+  transform: scale(1.05);
+}
+
+/* ---------- terminal ---------- */
+
+.boot-terminal {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: min(560px, calc(100vw - 40px));
+
+  transform: translate(-50%, -50%);
+
+  transition: opacity 0.25s ease;
+}
+
+.boot.is-word .boot-terminal,
+.boot.is-open .boot-terminal {
+  opacity: 0;
+}
+
+.boot-line {
+  margin: 7px 0;
+
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+
+  color: rgba(0, 255, 65, 0.82);
+  text-shadow: 0 0 8px rgba(0, 255, 65, 0.25);
+
+  animation: bootLineIn 0.28s ease-out both;
+}
+
+@keyframes bootLineIn {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* The progress bar actually fills instead of being typed as blocks */
+
+.boot-bar {
+  display: inline-block;
+
+  width: 120px;
+  height: 8px;
+
+  margin: 0 2px;
+
+  vertical-align: baseline;
+
+  border: 1px solid rgba(0, 255, 65, 0.55);
+}
+
+.boot-bar i {
+  display: block;
+
+  height: 100%;
+
+  background: var(--green);
+  box-shadow: 0 0 8px rgba(0, 255, 65, 0.6);
+
+  transform-origin: left;
+
+  animation: barFill 0.5s cubic-bezier(0.5, 0, 0.2, 1) 0.1s both;
+}
+
+@keyframes barFill {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.boot-caret {
+  display: inline-block;
+
+  width: 7px;
+  height: 13px;
+
+  margin-left: 6px;
+
+  vertical-align: text-bottom;
+
+  background: var(--green);
+
+  animation: caretBlink 0.9s steps(1, end) infinite;
+}
+
+@keyframes caretBlink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* ---------- CIPHER wordmark ---------- */
+
+.boot-word {
+  position: absolute;
+  inset: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: clamp(4px, 1vw, 16px);
+
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(3.4rem, 11vw, 10rem);
+  font-weight: 400;
+
+  pointer-events: none;
+}
+
+.boot-letter {
+  position: relative;
+
+  display: inline-block;
+
+  opacity: 0;
+
+  color: var(--green);
+
+  transition: opacity 0.18s ease;
+}
+
+/* The ghost keeps each slot at its final width, so scrambling never shifts layout */
+.boot-letter-ghost {
+  visibility: hidden;
+}
+
+.boot-letter-glyph {
+  position: absolute;
+  inset: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.boot-letter.is-scrambling {
+  opacity: 0.5;
+
+  font-family: var(--font-mono);
+  text-shadow: 0 0 10px rgba(0, 255, 65, 0.6);
+}
+
+.boot-letter.is-scrambling .boot-letter-glyph {
+  font-size: 0.7em;
+}
+
+.boot-letter.is-locked {
+  opacity: 1;
+
+  text-shadow:
+    0 0 8px rgba(0, 255, 65, 0.95),
+    0 0 28px rgba(0, 255, 65, 0.5);
+
+  animation: letterLock 0.5s ease-out;
+}
+
+@keyframes letterLock {
+  0% {
+    color: #eafff0;
+    transform: scale(1.08);
+    text-shadow:
+      0 0 14px rgba(200, 255, 215, 1),
+      0 0 46px rgba(0, 255, 65, 0.9);
+  }
+
+  100% {
+    color: var(--green);
+    transform: scale(1);
+  }
+}
+
+/* ---------- scan line ---------- */
+
+.boot-scan {
+  position: absolute;
+
+  top: 0;
+  bottom: 0;
+  left: 0;
+
+  width: 2px;
+
+  opacity: 0;
+
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--green) 18%,
+    var(--green) 82%,
+    transparent
+  );
+
+  box-shadow: 0 0 22px 3px rgba(0, 255, 65, 0.5);
+
+  will-change: transform;
+
+  transform: translate3d(-40px, 0, 0);
+
+  transition: opacity 0.2s ease;
+}
+
+/* soft trail behind the line */
+.boot-scan::before {
+  content: '';
+
+  position: absolute;
+
+  top: 0;
+  bottom: 0;
+  right: 2px;
+
+  width: 180px;
+
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(0, 255, 65, 0.09)
+  );
+}
+
+.boot.is-word .boot-scan {
+  opacity: 1;
+}
+
+/* ---------- skip ---------- */
+
+.boot-skip {
+  position: absolute;
+
+  right: 30px;
+  bottom: 25px;
+
+  z-index: 2;
+
+  padding: 6px 4px;
+
+  border: 0;
+
+  background: transparent;
+
+  color: rgba(0, 255, 65, 0.5);
+
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+
+  cursor: pointer;
+
+  transition: color 0.2s ease, opacity 0.3s ease;
+}
+
+.boot-skip:hover,
+.boot-skip:focus-visible {
+  color: var(--green);
+}
+
+.boot-skip:focus-visible {
+  outline: 1px solid var(--green);
+  outline-offset: 4px;
+}
+
+.boot.is-open .boot-skip {
+  opacity: 0;
+}
+
+@media (max-width: 600px) {
+  .boot-line {
+    font-size: 11px;
+  }
+
+  .boot-bar {
+    width: 70px;
+  }
+
+  .boot-skip {
+    right: 18px;
+    bottom: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boot-panel,
+  .boot-stage {
+    transition-duration: 0.01s;
+    transition-delay: 0s;
+  }
+
+  .boot.is-open .boot-seam {
+    animation: none;
+  }
+}

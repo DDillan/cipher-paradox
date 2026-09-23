@@ -1,0 +1,66 @@
+.custom-cursor {
+  position: fixed;
+
+  top: 0;
+  left: 0;
+
+  width: 38px;
+  height: 38px;
+
+  margin-left: -19px;
+  margin-top: -19px;
+
+  border:
+    1px solid
+    rgba(0, 255, 65, 0.85);
+
+  border-radius: 50%;
+
+  z-index: 9999;
+
+  pointer-events: none;
+
+  transition:
+    width 0.15s ease,
+    height 0.15s ease,
+    margin 0.15s ease;
+    opacity: 0;
+transition:
+  opacity 0.15s ease,
+  width 0.15s ease,
+  height 0.15s ease,
+  margin 0.15s ease;
+
+  box-shadow:
+    0 0 10px
+    rgba(0, 255, 65, 0.15);
+}
+
+.custom-cursor span {
+  position: absolute;
+
+  top: 50%;
+  left: 50%;
+
+  width: 6px;
+  height: 6px;
+
+  transform:
+    translate(-50%, -50%);
+
+  border-radius: 50%;
+
+  background:
+    var(--green);
+
+  box-shadow:
+    0 0 10px
+    var(--green);
+}
+.cursor-visible {
+  opacity: 1;
+}
+
+.cursor-hidden {
+  opacity: 0;
+}

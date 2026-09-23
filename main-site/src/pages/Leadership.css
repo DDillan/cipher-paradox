@@ -1,0 +1,533 @@
+.leadership {
+  position: relative;
+  min-height: auto;
+  padding: 105px 2vw 75px;
+  color: var(--text);
+  border-top: 1px solid rgba(0, 255, 65, 0.12);
+  background: rgba(2, 6, 4, 0.72);
+}
+
+.leadership-topline {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(0, 255, 65, 0.16);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.leadership-header {
+  max-width: 1500px;
+  margin: 60px 0 50px;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.leadership-label {
+  display: block;
+  margin-bottom: 24px;
+
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--green);
+}
+
+.leadership-header h2 {
+  margin: 0;
+
+  font-family: var(--font-main);
+  font-size: clamp(3rem, 5.5vw, 6rem);
+  line-height: 0.95;
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  white-space: nowrap;
+
+  color: rgba(225, 255, 230, 0.92);
+
+  text-shadow: 0 0 18px rgba(0, 255, 65, 0.35);
+}
+
+.leadership-header h2 span {
+  color: var(--green);
+  text-shadow: none;
+}
+
+.leadership-intro {
+  max-width: 420px;
+  margin-top: 22px;
+
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.52);
+}
+
+.leadership-grid {
+  max-width: 1500px;
+  margin: 0 auto;
+
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.leader-card {
+  min-width: 0;
+}
+
+.leader-image {
+  position: relative;
+  aspect-ratio: 0.78;
+  overflow: hidden;
+
+  border: 1px solid rgba(0, 255, 65, 0.18);
+  background: #050906;
+}
+
+.image-placeholder {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  color: rgba(0, 255, 65, 0.35);
+}
+
+.leader-number {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--green);
+}
+
+.leader-info {
+  padding: 18px 0 0;
+}
+
+.leader-info h3 {
+  margin: 0 0 6px;
+
+  font-family: var(--font-main);
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+.leader-info span {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* reveal */
+
+.leadership-reveal {
+  opacity: 0;
+  transform: translateY(35px);
+
+  transition:
+    opacity 0.9s ease,
+    transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.leadership-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* card interaction */
+
+.leader-card {
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.leader-card:hover {
+  transform: translateY(-14px);
+}
+
+.leader-image {
+  transition:
+    border-color 0.4s ease,
+    box-shadow 0.4s ease;
+}
+
+.leader-card:hover .leader-image {
+  border-color: var(--green);
+  box-shadow: 0 0 34px rgba(0, 255, 65, 0.45), inset 0 0 16px rgba(0, 255, 65, 0.1);
+}
+
+/* mobile */
+
+@media (max-width: 900px) {
+  .leadership-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .leadership {
+    padding: 85px 20px 55px;
+  }
+
+  .leadership-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .leadership-header h2 {
+    font-size: 2.4rem;
+  }
+}
+.leader-image img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+
+  filter: grayscale(100%) contrast(1.05);
+  transition:
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.5s ease;
+}
+
+.leader-card:hover .leader-image img {
+  transform: scale(1.04);
+  filter: grayscale(0%) contrast(1.05);
+}
+/* =========================
+   LEADERSHIP CAROUSEL
+   ========================= */
+
+.leadership-carousel {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+
+  user-select: none;
+
+  /* Fade the reel to transparent at both edges instead of cutting the
+     cards off sharply. */
+  --carousel-fade: 90px;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    black var(--carousel-fade),
+    black calc(100% - var(--carousel-fade)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    black var(--carousel-fade),
+    black calc(100% - var(--carousel-fade)),
+    transparent 100%
+  );
+}
+
+.leadership-track {
+  display: flex;
+  gap: 24px;
+  width: max-content;
+
+  /* Position is driven entirely from JS (auto-scroll speed, wheel, and
+     drag all update the same transform and wrap it seamlessly), so no
+     CSS animation here — see the effect in Leadership.jsx. */
+  will-change: transform;
+}
+
+.leader-card {
+  flex: 0 0 310px;
+  width: 310px;
+  cursor: pointer;
+}
+
+.leader-image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 0.78;
+  overflow: hidden;
+
+  border: 1px solid rgba(0, 255, 65, 0.45);
+  box-shadow: 0 0 16px rgba(0, 255, 65, 0.25), inset 0 0 12px rgba(0, 255, 65, 0.06);
+  background: #050906;
+
+  transition:
+    border-color 0.4s ease,
+    box-shadow 0.4s ease;
+}
+
+.leader-image img {
+  width: 100%;
+  height: 100%;
+  display: block;
+
+  object-fit: cover;
+
+  filter: grayscale(100%) contrast(1.05);
+
+  transition:
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.5s ease;
+}
+
+.leader-info {
+  padding: 20px 0 0;
+  text-align: center;
+}
+
+.leader-info span {
+  display: block;
+
+  margin-bottom: 8px;
+
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+
+  color: var(--green);
+}
+
+.leader-info h3 {
+  margin: 0;
+
+  font-family: var(--font-main);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.leader-socials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+
+  margin-top: 14px;
+}
+
+.leader-socials a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: var(--green-soft);
+  transition: color 0.3s ease;
+}
+
+.leader-socials a svg {
+  width: 20px;
+  height: 20px;
+}
+
+.leader-social-linkedin svg {
+  width: 25px;
+  height: 25px;
+}
+
+.leader-socials a:hover {
+  color: var(--green);
+}
+
+/* hover */
+
+@media (hover: hover) {
+  .leader-card:hover .leader-image img {
+    transform: scale(1.04);
+    filter: grayscale(0%) contrast(1.05);
+  }
+}
+
+/* =========================
+   LEADER MODAL
+   ========================= */
+
+.leader-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.leader-modal {
+  position: relative;
+  width: min(420px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+
+  border: 1px solid rgba(0, 255, 65, 0.3);
+  border-radius: 14px;
+  background: #020604;
+  box-shadow: 0 0 55px rgba(0, 255, 65, 0.12);
+}
+
+.leader-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 34px;
+  height: 34px;
+
+  border: 1px solid rgba(0, 255, 65, 0.35);
+  border-radius: 50%;
+  background: rgba(2, 6, 4, 0.65);
+  backdrop-filter: blur(6px);
+
+  color: var(--green);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.leader-modal-close:hover {
+  background: rgba(0, 255, 65, 0.1);
+  border-color: var(--line-bright);
+}
+
+.leader-modal-image {
+  width: 100%;
+  aspect-ratio: 0.85;
+  overflow: hidden;
+  background: #050906;
+}
+
+/* Deliberately no grayscale/contrast filter here — the modal shows the
+   leader's original photo untouched, unlike the desaturated carousel
+   thumbnail. */
+.leader-modal-image img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.leader-modal-info {
+  padding: 22px 24px 28px;
+  text-align: center;
+}
+
+.leader-modal-designation {
+  display: block;
+  margin-bottom: 8px;
+
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+
+  color: var(--green);
+}
+
+.leader-modal-info h3 {
+  margin: 0;
+
+  font-family: var(--font-main);
+  font-size: 26px;
+  font-weight: 400;
+
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.leader-modal-socials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+
+  margin-top: 18px;
+}
+
+.leader-modal-socials a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 38px;
+  height: 38px;
+
+  border: 1px solid rgba(0, 255, 65, 0.3);
+  border-radius: 50%;
+  color: var(--green-soft);
+
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.leader-modal-socials a svg {
+  width: 18px;
+  height: 18px;
+}
+
+.leader-modal-socials a:hover {
+  background: rgba(0, 255, 65, 0.1);
+  border-color: var(--line-bright);
+  color: var(--green);
+}
+
+@media (max-width: 600px) {
+  .leader-modal-overlay {
+    padding: 14px;
+  }
+
+  .leader-modal-info {
+    padding: 18px 18px 22px;
+  }
+}
+
+/* mobile */
+
+@media (max-width: 900px) {
+  .leader-card {
+    flex-basis: 270px;
+    width: 270px;
+  }
+
+  .leadership-track {
+    gap: 18px;
+  }
+
+  .leadership-carousel {
+    --carousel-fade: 50px;
+  }
+}
+
+@media (max-width: 600px) {
+  .leader-card {
+    flex-basis: 240px;
+    width: 240px;
+  }
+
+  .leadership-carousel {
+    --carousel-fade: 32px;
+  }
+}

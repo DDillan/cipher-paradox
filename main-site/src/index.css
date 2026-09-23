@@ -1,0 +1,103 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+:root {
+  /* CIPHER palette */
+  --bg: #020604;
+  --bg-soft: #06100a;
+  --surface: #08140c;
+  --surface-hover: #0c1d11;
+
+  --green: #00ff41;
+  --green-soft: #53c76b;
+  --green-muted: #6d9f78;
+
+  --text: #d5f5da;
+  --text-muted: #77927c;
+
+  --line: rgba(0, 255, 65, 0.18);
+  --line-bright: rgba(0, 255, 65, 0.45);
+
+  --glow: rgba(0, 255, 65, 0.25);
+
+  /* Typography */
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-main: Arial, Helvetica, sans-serif;
+  --font-body: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Layout */
+  --page-padding: clamp(20px, 4vw, 64px);
+  --max-width: 1440px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+
+  background: var(--bg);
+  color: var(--text);
+
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.6;
+
+  cursor: none;
+
+
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+/* Elements that get a native browser cursor (hand, I-beam, etc.) instead of
+   the custom green-dot cursor. CustomCursor.jsx reads the computed `cursor`
+   value on the hovered element and hides the dot whenever it isn't `none`,
+   so every one of these needs an explicit value to fall back on. */
+button,
+a,
+[role='button'],
+.cursor-pointer,
+select,
+input[type='checkbox'],
+input[type='radio'] {
+  cursor: pointer;
+}
+
+input:not([type='checkbox']):not([type='radio']),
+textarea,
+[contenteditable='true'] {
+  cursor: text;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+::selection {
+  background: var(--green);
+  color: var(--bg);
+}

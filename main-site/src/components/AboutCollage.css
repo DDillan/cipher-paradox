@@ -1,0 +1,298 @@
+/* =========================
+   ABOUT COLLAGE
+========================= */
+
+.collage {
+  --mx: 0;
+  --my: 0;
+
+  position: relative;
+
+  width: 100%;
+  max-width: 640px;
+
+  aspect-ratio: 1 / 1.04;
+
+  margin-inline: auto;
+
+  /* lets the neon CIPHER scale with the collage */
+  container-type: inline-size;
+
+  user-select: none;
+  -webkit-user-select: none;
+
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+
+.collage-ready {
+  opacity: 1;
+}
+
+
+/* ---------- photo cards ---------- */
+
+.collage-card {
+  position: absolute;
+
+  left: var(--x);
+  top: var(--y);
+  width: var(--w);
+
+  aspect-ratio: 4 / 3;
+
+  /* tilt + drift with the cursor */
+  transform:
+    translate(
+      calc(var(--mx) * var(--d) * -1px),
+      calc(var(--my) * var(--d) * -1px)
+    )
+    rotate(var(--r));
+
+  transition:
+    left 1s cubic-bezier(0.16, 1, 0.3, 1),
+    top 1s cubic-bezier(0.16, 1, 0.3, 1),
+    width 1s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+
+  will-change: transform, left, top, width;
+}
+
+/* CLOSED: every card is folded up small behind the CIPHER logo
+   and can't be touched, so only the logo reacts to the cursor */
+.collage:not(.collage-open) .collage-card {
+  left: 35%;
+  top: 34%;
+  width: 30%;
+
+  pointer-events: none;
+}
+
+.collage-frame {
+  position: relative;
+
+  width: 100%;
+  height: 100%;
+
+  overflow: hidden;
+
+  background: #06100a;
+
+  border: 1px solid rgba(0, 255, 65, 0.22);
+
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.55),
+    0 0 18px rgba(0, 255, 65, 0.06);
+
+  opacity: 1;
+  transform: scale(1);
+
+  transition:
+    opacity 0.5s ease calc(var(--i) * 0.06s),
+    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1) calc(var(--i) * 0.06s),
+    box-shadow 0.4s ease,
+    border-color 0.4s ease;
+}
+
+.collage:not(.collage-open) .collage-frame {
+  opacity: 0;
+  transform: scale(0.55);
+
+  /* fold away quickly, no stagger */
+  transition:
+    opacity 0.3s ease,
+    transform 0.4s ease;
+}
+
+.collage-card:hover .collage-frame {
+  border-color: rgba(0, 255, 65, 0.6);
+
+  box-shadow:
+    0 14px 36px rgba(0, 0, 0, 0.6),
+    0 0 26px rgba(0, 255, 65, 0.22);
+}
+
+.collage-img {
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+
+  pointer-events: none;
+}
+
+/* the incoming photo fades in on top of the old one */
+.collage-img-new {
+  animation: collageSwap 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.collage-empty {
+  position: absolute;
+  inset: 0;
+
+  display: grid;
+  place-items: center;
+
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(0, 255, 65, 0.05) 0 8px,
+      transparent 8px 16px
+    ),
+    #06100a;
+}
+
+.collage-empty span {
+  color: rgba(0, 255, 65, 0.55);
+
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+}
+
+@keyframes collageSwap {
+  from {
+    opacity: 0;
+    transform: scale(1.12);
+    filter: brightness(1.8) saturate(1.4);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: none;
+  }
+}
+
+
+/* ---------- glowing CIPHER (centered hover target) ---------- */
+
+.collage-neon {
+  position: absolute;
+
+  /* dead center of the collage */
+  left: 50%;
+  top: 50%;
+
+  z-index: 20;
+
+  /* generous padding = a big, easy hover area around the letters */
+  padding: 0.35em 0.5em;
+
+  transform: translate(-50%, -50%);
+
+  color: #4dff7a;
+
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: clamp(2.4rem, 12vw, 5.5rem);
+  font-size: 17cqw;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+
+  text-shadow:
+    0 0 4px rgba(190, 255, 205, 0.9),
+    0 0 14px rgba(0, 255, 65, 0.95),
+    0 0 34px rgba(0, 255, 65, 0.75),
+    0 0 70px rgba(0, 255, 65, 0.5);
+
+  cursor: pointer;
+  outline: none;
+
+  animation: neonFlicker 5s linear infinite;
+
+  transition:
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    text-shadow 0.4s ease;
+}
+
+.collage-neon:hover,
+.collage-neon:focus-visible,
+.collage-open .collage-neon {
+  transform: translate(-50%, -50%) scale(1.06);
+
+  text-shadow:
+    0 0 6px rgba(220, 255, 230, 1),
+    0 0 18px rgba(0, 255, 65, 1),
+    0 0 44px rgba(0, 255, 65, 0.9),
+    0 0 90px rgba(0, 255, 65, 0.65);
+}
+
+/* small hint under the logo, fades out once the photos are open */
+.collage-hint {
+  position: absolute;
+
+  left: 50%;
+  bottom: -0.1em;
+
+  transform: translateX(-50%);
+
+  color: rgba(120, 220, 140, 0.75);
+
+  font-family: var(--font-mono);
+  font-size: max(10px, 0.16em);
+  font-weight: 400;
+  letter-spacing: 0.25em;
+  text-shadow: none;
+
+  pointer-events: none;
+
+  transition: opacity 0.3s ease;
+}
+
+.collage-hint i {
+  display: none;
+  font-style: normal;
+}
+
+.collage-hint b {
+  font-weight: 400;
+}
+
+.collage-open .collage-hint {
+  opacity: 0;
+}
+
+/* touch screens have no hover -> say "tap" */
+@media (hover: none) {
+  .collage-hint b {
+    display: none;
+  }
+
+  .collage-hint i {
+    display: inline;
+  }
+}
+
+@keyframes neonFlicker {
+  0%, 18%, 22%, 62%, 64%, 100% {
+    opacity: 1;
+  }
+
+  20%, 63% {
+    opacity: 0.82;
+  }
+}
+
+
+/* ---------- small screens ---------- */
+
+@media (max-width: 800px) {
+  .collage {
+    max-width: 520px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collage-card,
+  .collage-frame,
+  .collage-img-new,
+  .collage-neon {
+    animation: none;
+    transition: none;
+  }
+}
