@@ -713,10 +713,20 @@
   .cipher-logo {
     grid-column: 2;
 
-    width: 110px;
-    height: 58px;
+    width: 138px;
+    height: 68px;
 
     justify-content: center;
+  }
+
+  /* Hover-only brighten never triggers on touch, and the logo tends to
+     get lost against the dark nav on small screens — so give it the
+     brighter look by default on mobile instead of waiting for :hover. */
+  .cipher-logo img {
+    filter:
+      brightness(1.25)
+      contrast(1.15)
+      drop-shadow(0 0 8px rgba(0, 255, 65, 0.2));
   }
 
   .nav-toggle {

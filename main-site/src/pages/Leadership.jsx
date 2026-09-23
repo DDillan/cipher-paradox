@@ -81,6 +81,15 @@ function Leadership() {
     const track = trackRef.current;
     if (!carousel || !track || !leaders.length) return;
 
+    // Touch devices have no cursor to steer with, and their own native
+    // horizontal swipe-scroll (enabled in CSS) is what should move the
+    // carousel instead — so skip the transform-driven animation entirely
+    // and leave the track at rest, letting the browser handle scrolling.
+    const isTouchDevice = window.matchMedia(
+      '(hover: none) and (pointer: coarse)'
+    ).matches;
+    if (isTouchDevice) return;
+
     const AUTO_SPEED = 40; // px / second, idle auto-scroll
     const MAX_STEER_SPEED = 320; // px / second, cursor fully out toward an edge
     const DEAD_ZONE = 0.08; // fraction of half-width around center with no movement
