@@ -4,9 +4,7 @@
 
 # CIPHER
 
-**The official website of the Student Association of Computer Science & Engineering, SJEC.**
-
-Bridging academic knowledge and practical application, a community of aspiring professionals in computing.
+**Live build phase for Cipher (CSE Association)'s track of the Build Blazer event at SJEC.**
 
 [**Live site**](https://ciphersjec.netlify.app) &nbsp;·&nbsp; [Instagram](https://www.instagram.com/ciphersjec) &nbsp;·&nbsp; [GitHub](https://github.com/AgentBlazer/cipher-buildblazer) &nbsp;·&nbsp; [Email](mailto:cipher@sjec.ac.in)
 
