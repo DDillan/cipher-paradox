@@ -20,6 +20,7 @@
 
   user-select: none;
   -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
 
   opacity: 0;
   transition: opacity 0.8s ease;
@@ -202,6 +203,10 @@
 
   cursor: pointer;
   outline: none;
+
+  /* Android Chrome paints a translucent blue box over anything tappable;
+     iOS Safari doesn't. The glow already gives the tap feedback. */
+  -webkit-tap-highlight-color: transparent;
 
   animation: neonFlicker 5s linear infinite;
 
