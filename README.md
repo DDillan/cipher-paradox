@@ -22,11 +22,23 @@ Bridging academic knowledge and practical application, a community of aspiring p
 
 ## Overview
 
-CIPHER is a terminal-and-neon themed single-page website built for the CSE department's student association. Visitors get a hacker-style boot sequence, then a smooth scroll through who the association is, what it does, who leads it, and what it has been up to, and they can apply to join from the same page.
+CIPHER website is built for the CSE department's student association 'Cipher'. Visitors get a smooth scroll through who the association is, what it does, who leads it, and what it has been up to, and they can apply to join from the same page.
 
 Everything that changes over time (leadership, events, activities, photos, join applications) lives in **Supabase** and is managed from a separate, login-protected **admin dashboard**. Updating the site never needs a code change or a redeploy.
 
 The project was built for **Build Blazer Phase 2**, organised by Cipher (CSE Association) in collaboration with the AgentBlazer Club at SJEC.
+
+## Team
+
+| Role | Name |
+|------|------|
+| Team Lead | Aditya Sebastian Kuttikat |
+| Members | Dillan Kendrick Dsouza, Ajith TK, Arel Samuel Dsouza |
+
+## Live Deployment
+
+- **Main Portal:** https://ciphersjec.netlify.app/
+- **Admin Portal:** https://quitesalamanderadmin.netlify.app/
 
 ## Features
 
@@ -246,15 +258,6 @@ Set the environment variables in the Netlify dashboard (Site configuration → E
 4. Open a pull request describing what changed and why
 
 Please don't commit `.env` files or any Supabase secret keys.
-
-## Contact
-
-**CIPHER, Department of Computer Science & Engineering, SJEC**
-
-- Email: [cipher@sjec.ac.in](mailto:cipher@sjec.ac.in)
-- Instagram: [@ciphersjec](https://www.instagram.com/ciphersjec)
-- LinkedIn: [linkedin.com](https://in.linkedin.com/)
-- GitHub: [AgentBlazer/cipher-buildblazer](https://github.com/AgentBlazer/cipher-buildblazer)
 
 ## License
 
