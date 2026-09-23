@@ -18,19 +18,19 @@ const SOCIAL_LINKS = [
   {
     id: 'mail',
     label: 'Email',
-    href: '#', // TODO: add admin contact email, e.g. 'mailto:cipher@sjec.ac.in'
+    href: 'mailto:cipher@sjec.ac.in',
     icon: 'mail',
   },
   {
     id: 'linkedin',
     label: 'LinkedIn',
-    href: '#', // TODO: add LinkedIn page URL
+    href: 'https://in.linkedin.com/',
     icon: 'linkedin',
   },
   {
     id: 'github',
     label: 'GitHub',
-    href: '#', // TODO: add GitHub org/profile URL
+    href: 'https://github.com/AgentBlazer/cipher-buildblazer',
     icon: 'github',
   },
   {
@@ -96,8 +96,9 @@ function Footer() {
                 key={social.id}
                 className="cipher-footer-icon"
                 href={social.href}
-                target="_blank"
-                rel="noopener noreferrer"
+                {...(social.href.startsWith('mailto:')
+                  ? {}
+                  : { target: '_blank', rel: 'noopener noreferrer' })}
                 aria-label={social.label}
                 title={social.label}
               >
