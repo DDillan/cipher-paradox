@@ -187,6 +187,65 @@ function Leadership() {
     };
   }, [leaders]);
 
+  // Touch devices: there's no hover to reveal a card's colour, so instead
+  // the card closest to the middle of the carousel "lights up" (full colour,
+  // green glow, slight lift) and hands over to its neighbour as the person
+  // swipes along. Toggles a class straight on the DOM node so scrolling
+  // never triggers a React re-render.
+  useEffect(() => {
+    const carousel = sectionRef.current?.querySelector('.leadership-carousel');
+    const track = trackRef.current;
+    if (!carousel || !track || !leaders.length) return;
+
+    const isTouchDevice = window.matchMedia(
+      '(hover: none) and (pointer: coarse)'
+    ).matches;
+    if (!isTouchDevice) return;
+
+    let rafId = 0;
+    let focused = null;
+
+    const updateFocus = () => {
+      rafId = 0;
+      const rect = carousel.getBoundingClientRect();
+      const center = rect.left + rect.width / 2;
+
+      let best = null;
+      let bestDistance = Infinity;
+
+      Array.from(track.children).forEach((card) => {
+        const box = card.getBoundingClientRect();
+        // Skip cards that are completely off-screen.
+        if (box.right < rect.left || box.left > rect.right) return;
+        const distance = Math.abs(box.left + box.width / 2 - center);
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          best = card;
+        }
+      });
+
+      if (best === focused) return;
+      if (focused) focused.classList.remove('is-focused');
+      if (best) best.classList.add('is-focused');
+      focused = best;
+    };
+
+    const scheduleUpdate = () => {
+      if (!rafId) rafId = requestAnimationFrame(updateFocus);
+    };
+
+    updateFocus();
+    carousel.addEventListener('scroll', scheduleUpdate, { passive: true });
+    window.addEventListener('resize', scheduleUpdate);
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      carousel.removeEventListener('scroll', scheduleUpdate);
+      window.removeEventListener('resize', scheduleUpdate);
+      if (focused) focused.classList.remove('is-focused');
+    };
+  }, [leaders]);
+
   // Modal: lock page scroll and let Escape close it while it's open.
   useEffect(() => {
     if (!activeLeader) return;

@@ -551,4 +551,26 @@
   .leadership-track {
     touch-action: pan-x;
   }
+
+  /* Room for the focused card's lift and glow, which would otherwise be
+     clipped by the scroll container. */
+  .leadership-carousel {
+    padding: 18px 0 8px;
+  }
+
+  /* The card nearest the centre of the carousel lights up as you swipe
+     (class toggled from Leadership.jsx). */
+  .leader-card.is-focused {
+    transform: translateY(-10px);
+  }
+
+  .leader-card.is-focused .leader-image {
+    border-color: var(--green);
+    box-shadow: 0 0 34px rgba(0, 255, 65, 0.45), inset 0 0 16px rgba(0, 255, 65, 0.1);
+  }
+
+  .leader-card.is-focused .leader-image img {
+    transform: scale(1.04);
+    filter: grayscale(0%) contrast(1.05);
+  }
 }
