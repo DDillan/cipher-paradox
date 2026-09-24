@@ -13,13 +13,13 @@
   padding: 88px 2vw 88px;
 
   /* see-through so the topographic lines show behind it */
-  background: rgba(2, 6, 4, 0.45);
+  background: rgba(var(--bg-rgb), 0.45);
 
   color: var(--text);
 
   overflow: hidden;
 
-  border-top: 1px solid rgba(0, 255, 65, 0.12);
+  border-top: 1px solid rgba(var(--green-rgb), 0.12);
 }
 
 .about-content {
@@ -63,9 +63,9 @@
   font-weight: 400;
   letter-spacing: -0.06em;
 
-  color: rgba(225, 255, 230, 0.92);
+  color: rgba(var(--text-rgb), 0.92);
 
-  text-shadow: 0 0 18px rgba(0, 255, 65, 0.35);
+  text-shadow: 0 0 18px rgba(var(--green-rgb), 0.35);
 }
 
 .about-paragraph {
@@ -73,7 +73,7 @@
 
   max-width: 600px;
 
-  color: rgba(150, 195, 158, 0.9);
+  color: rgba(var(--text-muted-rgb), 0.9);
 
   font-family: var(--font-body);
   font-size: clamp(16px, 1.3vw, 19px);
@@ -85,7 +85,7 @@
 
   font-weight: 500;
 
-  text-shadow: 0 0 12px rgba(0, 255, 65, 0.3);
+  text-shadow: 0 0 12px rgba(var(--green-rgb), 0.3);
 }
 
 

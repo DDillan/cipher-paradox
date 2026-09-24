@@ -12,7 +12,7 @@
 
   border:
     1px solid
-    rgba(0, 255, 65, 0.85);
+    rgba(var(--green-rgb), 0.85);
 
   border-radius: 50%;
 
@@ -33,7 +33,7 @@ transition:
 
   box-shadow:
     0 0 10px
-    rgba(0, 255, 65, 0.15);
+    rgba(var(--green-rgb), 0.15);
 }
 
 .custom-cursor span {

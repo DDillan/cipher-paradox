@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { THEME_CHANGE_EVENT } from '../lib/theme';
 
 // ~30fps is plenty for a slow-moving background and halves the main-thread cost
 const FRAME_INTERVAL = 1000 / 30;
@@ -7,6 +8,7 @@ function TopographicBackground({ running = true }) {
   const canvasRef = useRef(null);
   const runningRef = useRef(running);
   const kickRef = useRef(() => {});
+  const colorsRef = useRef({ bg: '#020604', line: 'rgba(0, 255, 65, 0.2)' });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -19,6 +21,22 @@ function TopographicBackground({ running = true }) {
     let animationFrame = 0;
     let time = 0;
     let lastDraw = 0;
+
+    // Pull the current theme's colors from CSS variables. Cheap enough to
+    // call on mount + whenever the theme toggles, no need to do it per frame.
+    const readColors = () => {
+      const styles = getComputedStyle(document.documentElement);
+      const bg = styles.getPropertyValue('--bg').trim();
+      const line = styles.getPropertyValue('--topo-line').trim();
+
+      colorsRef.current = {
+        bg: bg || colorsRef.current.bg,
+        line: line || colorsRef.current.line,
+      };
+    };
+
+    readColors();
+    window.addEventListener(THEME_CHANGE_EVENT, readColors);
 
     // A subtle background doesn't need retina-sharp contour lines, and
     // halving the pixel count roughly quarters the fill/stroke cost.
@@ -40,7 +58,7 @@ function TopographicBackground({ running = true }) {
 
       ctx.clearRect(0, 0, width, height);
 
-      ctx.fillStyle = '#020604';
+      ctx.fillStyle = colorsRef.current.bg;
       ctx.fillRect(0, 0, width, height);
 
       /*
@@ -99,8 +117,7 @@ function TopographicBackground({ running = true }) {
           }
         }
 
-        ctx.strokeStyle =
-          'rgba(0, 255, 65, 0.20)';
+        ctx.strokeStyle = colorsRef.current.line;
 
         ctx.lineWidth = 0.8;
 
@@ -147,6 +164,7 @@ function TopographicBackground({ running = true }) {
       cancelAnimationFrame(animationFrame);
 
       window.removeEventListener('resize', resize);
+      window.removeEventListener(THEME_CHANGE_EVENT, readColors);
       document.removeEventListener('visibilitychange', kick);
     };
   }, []);

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { THEME_CHANGE_EVENT } from '../lib/theme';
 
 const CHARACTERS =
   'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*+=<>?/';
@@ -14,6 +15,7 @@ function CharacterLogo({ active }) {
   const canvasRef = useRef(null);
   const mouseRef = useRef({ x: -1000, y: -1000 });
   const controls = useRef({ start: () => {} });
+  const colorsRef = useRef({ fill: '#00ff41', fillActive: '#d4ffde' });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -22,6 +24,20 @@ function CharacterLogo({ active }) {
     const reduced = window.matchMedia(
       '(prefers-reduced-motion: reduce)'
     ).matches;
+
+    const readColors = () => {
+      const styles = getComputedStyle(document.documentElement);
+      const fill = styles.getPropertyValue('--char-fill').trim();
+      const fillActive = styles.getPropertyValue('--char-fill-active').trim();
+
+      colorsRef.current = {
+        fill: fill || colorsRef.current.fill,
+        fillActive: fillActive || colorsRef.current.fillActive,
+      };
+    };
+
+    readColors();
+    window.addEventListener(THEME_CHANGE_EVENT, readColors);
 
     let raf = 0;
     let particles = [];
@@ -149,7 +165,7 @@ function CharacterLogo({ active }) {
       let currentSize = -1;
       let pale = false;
 
-      ctx.fillStyle = '#00ff41';
+      ctx.fillStyle = colorsRef.current.fill;
       ctx.textBaseline = 'alphabetic';
 
       for (let i = 0; i < particles.length; i += 1) {
@@ -189,7 +205,7 @@ function CharacterLogo({ active }) {
         }
 
         if (inZone !== pale) {
-          ctx.fillStyle = inZone ? '#d4ffde' : '#00ff41';
+          ctx.fillStyle = inZone ? colorsRef.current.fillActive : colorsRef.current.fill;
           pale = inZone;
         }
 
@@ -276,6 +292,7 @@ function CharacterLogo({ active }) {
 
       document.removeEventListener('visibilitychange', kick);
       window.removeEventListener('mousemove', mouseMove);
+      window.removeEventListener(THEME_CHANGE_EVENT, readColors);
     };
   }, []);
 

@@ -5,7 +5,7 @@
 .app {
   position: relative;
   min-height: 100vh;
-  background: #020604;
+  background: var(--bg);
   overflow-x: hidden;
 }
 

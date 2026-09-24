@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import CharacterLogo from '../components/CharacterLogo';
+import ThemeToggle from '../components/ThemeToggle';
 import useBackClose from '../lib/useBackClose';
 import './Home.css';
 
@@ -85,31 +86,35 @@ function Home({ active, onJoin }) {
           ))}
         </nav>
 
-        <a
-          href="#join"
-          className="nav-join"
-          onClick={(event) => {
-            event.preventDefault();
-            closeMenu();
-            onJoin?.();
-          }}
-        >
-          <span className="btn-text">Join Cipher</span>
-        </a>
+        <div className="nav-actions">
+          <ThemeToggle />
 
-        {/* Mobile menu button (three bars) */}
-        <button
-          type="button"
-          className="nav-toggle"
-          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-          aria-expanded={menuOpen}
-          aria-controls="main-menu"
-          onClick={() => setMenuOpen((open) => !open)}
-        >
-          <span />
-          <span />
-          <span />
-        </button>
+          <a
+            href="#join"
+            className="nav-join"
+            onClick={(event) => {
+              event.preventDefault();
+              closeMenu();
+              onJoin?.();
+            }}
+          >
+            <span className="btn-text">Join Cipher</span>
+          </a>
+
+          {/* Mobile menu button (three bars) */}
+          <button
+            type="button"
+            className="nav-toggle"
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={menuOpen}
+            aria-controls="main-menu"
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+        </div>
 
       </header>
 
