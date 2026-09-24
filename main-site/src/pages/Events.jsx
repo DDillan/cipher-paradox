@@ -182,6 +182,20 @@ function Events() {
   useBackClose(!!selectedEvent, () => setSelectedEvent(null));
   useBackClose(!!selectedActivity, () => setSelectedActivity(null));
 
+  // Escape closes the open popup (the activity popup sits on top, so it goes first)
+  useEffect(() => {
+    if (!selectedEvent && !selectedActivity) return undefined;
+
+    const onKeyDown = (event) => {
+      if (event.key !== 'Escape') return;
+      if (selectedActivity) setSelectedActivity(null);
+      else setSelectedEvent(null);
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [selectedEvent, selectedActivity]);
+
   // Keep the page from scrolling behind an open popup
   useEffect(() => {
     if (!selectedEvent && !selectedActivity) return undefined;
