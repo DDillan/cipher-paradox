@@ -36,7 +36,7 @@ The project was built for **Build Blazer Phase 2**, organised by Cipher (CSE Ass
 ## Live Deployment
 
 - **Main Portal:** https://ciphersjec.netlify.app/
-- **Admin Portal:** https://quitesalamanderadmin.netlify.app/
+- **Admin Portal:** https://quitesalamanderadmin.netlify.app/ (email: dillandsouza05@gmail.com ; password: kuttiajithdillan)
 
 ## Features
 
