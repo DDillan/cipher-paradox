@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, memo } from 'react';
+import { useEffect, useState, useCallback, useRef, memo } from 'react';
 import { supabase, uploadImage } from '../lib/supabase';
 import cipherLogo from '../assets/cipher-logo.png';
 import './AdminPanel.css';
@@ -440,6 +440,54 @@ function ImagePreviewModal({ label, url, onClose, onDelete }) {
   );
 }
 
+/* ---------------- SAVE BUTTON ---------------- */
+
+// Tracks each row's save progress ('saving' | 'saved' | 'failed') so the SAVE
+// button itself can show it. 'saved' and 'failed' go back to plain SAVE after
+// a couple of seconds.
+function useSaveStates() {
+  const [states, setStates] = useState({});
+  const timers = useRef({});
+
+  const setSaveState = useCallback((id, value) => {
+    clearTimeout(timers.current[id]);
+
+    setStates((current) => ({ ...current, [id]: value }));
+
+    if (value !== 'saving') {
+      timers.current[id] = setTimeout(() => {
+        setStates((current) => {
+          const next = { ...current };
+          delete next[id];
+          return next;
+        });
+      }, 2500);
+    }
+  }, []);
+
+  // don't leave timers running if the tab is switched away
+  useEffect(() => {
+    const pending = timers.current;
+    return () => Object.values(pending).forEach(clearTimeout);
+  }, []);
+
+  return [states, setSaveState];
+}
+
+const SAVE_LABELS = { saving: 'SAVING...', saved: 'SAVED ✓', failed: 'NOT SAVED' };
+
+function SaveButton({ state, onClick }) {
+  return (
+    <button
+      className={`admin-btn solid save-btn${state ? ` is-${state}` : ''}`}
+      disabled={state === 'saving'}
+      onClick={onClick}
+    >
+      {SAVE_LABELS[state] || 'SAVE'}
+    </button>
+  );
+}
+
 /* ---------------- LEADERSHIP ---------------- */
 
 function LeadershipAdmin() {
@@ -447,6 +495,7 @@ function LeadershipAdmin() {
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState('');
   const [adding, setAdding] = useState(false);
+  const [saveStates, setSaveState] = useSaveStates();
 
   const load = async () => {
     const { data, error } = await supabase
@@ -480,7 +529,8 @@ function LeadershipAdmin() {
   };
 
   const save = async (row) => {
-    setStatus('SAVING...');
+    setStatus('');
+    setSaveState(row.id, 'saving');
     const { data, error } = await supabase
       .from('leadership')
       .update({
@@ -496,12 +546,15 @@ function LeadershipAdmin() {
 
     if (error) {
       setStatus(error.message);
+      setSaveState(row.id, 'failed');
+      setTimeout(() => setStatus(''), 2500);
     } else if (!data || data.length === 0) {
       setStatus('NOT SAVED — CHECK PERMISSIONS (RLS)');
+      setSaveState(row.id, 'failed');
+      setTimeout(() => setStatus(''), 2500);
     } else {
-      setStatus('SAVED ✓');
+      setSaveState(row.id, 'saved');
     }
-    setTimeout(() => setStatus(''), 2500);
   };
 
   const remove = async (id) => {
@@ -614,9 +667,7 @@ function LeadershipAdmin() {
             />
 
             <div className="admin-row-actions">
-              <button className="admin-btn solid" onClick={() => save(row)}>
-                SAVE
-              </button>
+              <SaveButton state={saveStates[row.id]} onClick={() => save(row)} />
               <button className="admin-btn danger" onClick={() => remove(row.id)}>
                 DELETE
               </button>
@@ -635,6 +686,7 @@ function EventsAdmin() {
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState('');
   const [adding, setAdding] = useState(false);
+  const [saveStates, setSaveState] = useSaveStates();
 
   const load = useCallback(async () => {
     const { data, error } = await supabase
@@ -673,7 +725,8 @@ function EventsAdmin() {
   // memoized EventRow below only re-renders the row that actually changed,
   // instead of every event card re-rendering on every keystroke.
   const save = useCallback(async (row) => {
-    setStatus('SAVING...');
+    setStatus('');
+    setSaveState(row.id, 'saving');
     const { data, error } = await supabase
       .from('events')
       .update({
@@ -690,13 +743,16 @@ function EventsAdmin() {
 
     if (error) {
       setStatus(error.message);
+      setSaveState(row.id, 'failed');
+      setTimeout(() => setStatus(''), 2500);
     } else if (!data || data.length === 0) {
       setStatus('NOT SAVED — CHECK PERMISSIONS (RLS)');
+      setSaveState(row.id, 'failed');
+      setTimeout(() => setStatus(''), 2500);
     } else {
-      setStatus('SAVED ✓');
+      setSaveState(row.id, 'saved');
     }
-    setTimeout(() => setStatus(''), 2500);
-  }, []);
+  }, [setSaveState]);
 
   const remove = useCallback(async (id) => {
     if (!confirm('Delete this event and its gallery?')) return;
@@ -794,6 +850,7 @@ function EventsAdmin() {
         <EventRow
           key={row.id}
           row={row}
+          saveState={saveStates[row.id]}
           patch={patch}
           save={save}
           remove={remove}
@@ -811,7 +868,7 @@ function EventsAdmin() {
 // re-render on every keystroke/upload was the source of the scroll/click
 // lag that only showed up on the Events tab, since it's the one tab with
 // large per-row image galleries on top of the usual text fields.
-const EventRow = memo(function EventRow({ row, patch, save, remove, removeImage, addImage }) {
+const EventRow = memo(function EventRow({ row, saveState, patch, save, remove, removeImage, addImage }) {
   const images = row.event_images || [];
   const [previewIdx, setPreviewIdx] = useState(null);
   const previewImg = previewIdx !== null ? images[previewIdx] : null;
@@ -903,9 +960,7 @@ const EventRow = memo(function EventRow({ row, patch, save, remove, removeImage,
       />
 
       <div className="admin-row-actions">
-        <button className="admin-btn solid" onClick={() => save(row)}>
-          SAVE
-        </button>
+        <SaveButton state={saveState} onClick={() => save(row)} />
         <button className="admin-btn danger" onClick={() => remove(row.id)}>
           DELETE
         </button>
@@ -921,6 +976,7 @@ function ActivitiesAdmin() {
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState('');
   const [adding, setAdding] = useState(false);
+  const [saveStates, setSaveState] = useSaveStates();
 
   const load = async () => {
     const { data, error } = await supabase
@@ -952,7 +1008,8 @@ function ActivitiesAdmin() {
   };
 
   const save = async (row) => {
-    setStatus('SAVING...');
+    setStatus('');
+    setSaveState(row.id, 'saving');
     const { data, error } = await supabase
       .from('activities')
       .update({
@@ -966,12 +1023,15 @@ function ActivitiesAdmin() {
 
     if (error) {
       setStatus(error.message);
+      setSaveState(row.id, 'failed');
+      setTimeout(() => setStatus(''), 2500);
     } else if (!data || data.length === 0) {
       setStatus('NOT SAVED — CHECK PERMISSIONS (RLS)');
+      setSaveState(row.id, 'failed');
+      setTimeout(() => setStatus(''), 2500);
     } else {
-      setStatus('SAVED ✓');
+      setSaveState(row.id, 'saved');
     }
-    setTimeout(() => setStatus(''), 2500);
   };
 
   const remove = async (id) => {
@@ -1076,9 +1136,7 @@ function ActivitiesAdmin() {
           />
 
           <div className="admin-row-actions">
-            <button className="admin-btn solid" onClick={() => save(row)}>
-              SAVE
-            </button>
+            <SaveButton state={saveStates[row.id]} onClick={() => save(row)} />
             <button className="admin-btn danger" onClick={() => remove(row.id)}>
               DELETE
             </button>
