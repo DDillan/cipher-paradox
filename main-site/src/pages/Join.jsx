@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import useBackClose from '../lib/useBackClose';
 import './Join.css';
 
 function Join({ open, onJoin, onClose }) {
@@ -7,6 +8,9 @@ function Join({ open, onJoin, onClose }) {
   const [form, setForm] = useState({ name: '', email: '', message: '', company: '' });
   const [status, setStatus] = useState('idle');
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Phone back gesture closes the Join popup
+  useBackClose(open, onClose);
 
   useEffect(() => {
     const section = sectionRef.current;

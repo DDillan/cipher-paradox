@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import useBackClose from '../lib/useBackClose';
 import './Events.css';
 
 /* Slug-style label shown on the active card, e.g. "Lumière — The Gala"
@@ -169,6 +170,28 @@ function Events() {
   const [selectedActivity, setSelectedActivity] = useState(null);
   const [activitiesLoading, setActivitiesLoading] = useState(true);
 
+  // On phones the long description is collapsed under the photos
+  const [descOpen, setDescOpen] = useState(false);
+
+  const openEvent = (event) => {
+    setDescOpen(false);
+    setSelectedEvent(event);
+  };
+
+  // Phone back gesture closes the open event / activity popup
+  useBackClose(!!selectedEvent, () => setSelectedEvent(null));
+  useBackClose(!!selectedActivity, () => setSelectedActivity(null));
+
+  // Keep the page from scrolling behind an open popup
+  useEffect(() => {
+    if (!selectedEvent && !selectedActivity) return undefined;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [selectedEvent, selectedActivity]);
+
   useEffect(() => {
     supabase
       .from('events')
@@ -210,7 +233,7 @@ function Events() {
           <article
             className="event-card"
             key={event.id}
-            onClick={() => setSelectedEvent(event)}
+            onClick={() => openEvent(event)}
           >
             <div className="event-card-top">
               <span className="event-type">▣ {event.category}</span>
@@ -225,7 +248,7 @@ function Events() {
               className="gallery-button"
               onClick={(e) => {
                 e.stopPropagation();
-                setSelectedEvent(event);
+                openEvent(event);
               }}
             >
               VIEW GALLERY ↗
@@ -254,8 +277,6 @@ function Events() {
                   <span>{selectedEvent.event_date}</span>
                   <span>{selectedEvent.location}</span>
                 </div>
-
-                <p>{selectedEvent.description}</p>
               </div>
 
               <EventImageCarousel
@@ -269,6 +290,24 @@ function Events() {
                   .join(' · ')}
                 dateLabel={selectedEvent.event_date}
               />
+
+              <div className="event-detail-desc-wrap">
+                <p
+                  className={`event-detail-desc${descOpen ? ' is-open' : ''}`}
+                >
+                  {selectedEvent.description}
+                </p>
+
+                {(selectedEvent.description || '').length > 140 && (
+                  <button
+                    type="button"
+                    className="event-desc-toggle"
+                    onClick={() => setDescOpen((open) => !open)}
+                  >
+                    {descOpen ? 'SHOW LESS ▴' : 'READ MORE ▾'}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>

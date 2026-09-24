@@ -101,3 +101,30 @@ img {
   background: var(--green);
   color: var(--bg);
 }
+/* Remove the blue/grey flash Android browsers draw when tapping elements,
+   and the default focus box for touch/mouse clicks (keyboard focus keeps
+   its ring for accessibility). */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a,
+button,
+input,
+textarea,
+select,
+summary,
+[role='button'],
+[tabindex] {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+a:focus:not(:focus-visible),
+button:focus:not(:focus-visible),
+[role='button']:focus:not(:focus-visible),
+[tabindex]:focus:not(:focus-visible),
+canvas:focus,
+svg:focus {
+  outline: none;
+}

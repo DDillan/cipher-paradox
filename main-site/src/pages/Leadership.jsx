@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import useBackClose from '../lib/useBackClose';
 import { supabase } from '../lib/supabase';
 import './Leadership.css';
 
@@ -15,19 +16,42 @@ const FALLBACK_LEADERS = [
   { name: 'Shamitha KV', designation: 'DESIGNATION', image_url: '/assets/leadership/Shamitha KV.JPG' },
 ];
 
-// How many times the leader list is repeated in the track. The auto-scroll
-// and cursor-move handler below all wrap the position back within a single
-// copy's width, so this only needs to be enough to keep the visible area
-// full during a fast cursor sweep — it does not limit how long the loop can run.
-const TRACK_COPIES = 3;
+// The leader list is repeated in the track so the loop can wrap seamlessly.
+// How many copies are needed depends on how many leaders there are and how
+// wide the screen is (a short list on a wide screen needs more repeats to
+// keep the visible area full), so it is worked out at runtime.
+const MIN_COPIES = 3;
+const SMALLEST_CARD = 240 + 18; // narrowest card + gap, used as a safe estimate
 
 function Leadership() {
   const sectionRef = useRef(null);
   const trackRef = useRef(null);
   const [leaders, setLeaders] = useState(FALLBACK_LEADERS);
   const [activeLeader, setActiveLeader] = useState(null);
+  const [copies, setCopies] = useState(MIN_COPIES);
+  // The reel stays hidden until the real data has arrived, so the fallback
+  // list never flashes and then gets swapped out (which made it look broken).
+  const [loaded, setLoaded] = useState(false);
+  const offsetRef = useRef(0); // survives re-renders / resizes
+
+  // Enough copies that (one wrap distance) + (screen width) always fits.
+  useEffect(() => {
+    const update = () => {
+      const setWidth = leaders.length * SMALLEST_CARD;
+      const needed = Math.ceil(window.innerWidth / setWidth) + 2;
+      setCopies(Math.max(MIN_COPIES, needed));
+    };
+
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, [leaders.length]);
 
   useEffect(() => {
+    // If the database is slow or unreachable, don't leave the section blank:
+    // after a few seconds show the built-in list instead.
+    const giveUp = setTimeout(() => setLoaded(true), 3000);
+
     supabase
       .from('leadership')
       .select('*')
@@ -35,10 +59,18 @@ function Leadership() {
       .then(({ data, error }) => {
         if (error) {
           console.error('Leadership load failed:', error.message);
-          return;
+        } else if (data && data.length) {
+          setLeaders(data);
         }
-        if (data && data.length) setLeaders(data);
+        clearTimeout(giveUp);
+        setLoaded(true);
+      })
+      .catch(() => {
+        clearTimeout(giveUp);
+        setLoaded(true);
       });
+
+    return () => clearTimeout(giveUp);
   }, []);
 
   useEffect(() => {
@@ -61,168 +93,88 @@ function Leadership() {
     return () => observer.disconnect();
   }, [leaders]);
 
-  // Drives the whole carousel — auto-scroll speed, cursor-steering, and the
-  // seamless loop — from a single position value, applied directly as a
-  // transform. Mouse wheel no longer touches the carousel at all (it's left
-  // to scroll the page normally).
-  //
-  // Cursor control is position-based, not a 1:1 drag of raw pointer travel:
-  // matching every pixel of mouse movement 1:1 meant the offset could only
-  // ever move as far as your hand physically travels across the screen, so
-  // swinging the cursor back and forth (as you naturally do, being limited
-  // by screen width) canceled itself out and the same cards stayed put.
-  // Instead, where the cursor sits across the carousel's width sets a
-  // steering value from -1 (far left) to 1 (far right), with a dead zone
-  // near the center; that value is applied every frame as a speed, so
-  // holding the cursor out toward an edge keeps the cards moving that way
-  // for as long as you hold it there, all the way around the loop.
+  // ONE engine drives the carousel on every device. The track is moved with
+  // a transform, and the position is wrapped by exactly one copy's width, so
+  // the loop is seamless in both directions and never runs out.
+  //   - idle:            slow auto-scroll
+  //   - mouse:           hold the cursor toward an edge to steer
+  //   - finger (touch):  drag with momentum, then auto-scroll resumes
+  // Vertical page scrolling still works because the carousel only claims
+  // horizontal pans (touch-action: pan-y in the CSS).
   useEffect(() => {
     const carousel = sectionRef.current?.querySelector('.leadership-carousel');
     const track = trackRef.current;
-    if (!carousel || !track || !leaders.length) return;
+    if (!carousel || !track || !loaded || !leaders.length) return;
 
-    // Touch devices have no cursor to steer with, and their own native
-    // horizontal swipe-scroll (enabled in CSS) is what should move the
-    // carousel instead — so skip the transform-driven animation entirely
-    // and leave the track at rest, letting the browser handle scrolling.
+    const count = leaders.length;
     const isTouchDevice = window.matchMedia(
       '(hover: none) and (pointer: coarse)'
     ).matches;
-    if (isTouchDevice) return;
 
     const AUTO_SPEED = 40; // px / second, idle auto-scroll
     const MAX_STEER_SPEED = 320; // px / second, cursor fully out toward an edge
-    const DEAD_ZONE = 0.08; // fraction of half-width around center with no movement
+    const DEAD_ZONE = 0.08;
     const PAUSE_MS = 1500;
+    const FRICTION = 3.2; // momentum decay after a flick
 
-    let offset = 0;
+    let offset = offsetRef.current;
     let setWidth = 0;
+    let firstLeft = 0;
+    let cardWidth = 0;
     let hovering = false;
-    let steer = 0; // -1 (left edge) .. 1 (right edge)
+    let steer = 0;
     let resumeAt = 0;
+    let dragging = false;
+    let dragMoved = 0;
+    let lastX = 0;
+    let lastT = 0;
+    let dragVelocity = 0;
+    let velocity = 0;
+    let suppressClick = false;
+    let onScreen = true;
+    let focused = null;
     let lastTime = performance.now();
-    let rafId;
+    let rafId = 0;
 
     const measure = () => {
-      setWidth = track.scrollWidth / TRACK_COPIES;
+      const first = track.children[0];
+      const next = track.children[count];
+      if (!first || !next) return;
+      firstLeft = first.offsetLeft;
+      cardWidth = first.offsetWidth;
+      setWidth = next.offsetLeft - first.offsetLeft;
     };
 
     const wrap = () => {
       if (!setWidth) return;
-      // Keep offset in (-setWidth, 0] — with 3 copies in the DOM there's
-      // always at least one full extra copy on either side of what's
-      // visible, so the wrap never shows a gap.
+      // keep offset in [-setWidth, 0): a full copy always exists on the
+      // right of the visible area, so the wrap can never show a gap
       offset = ((offset % setWidth) + setWidth) % setWidth;
       offset -= setWidth;
     };
 
     const apply = () => {
-      track.style.transform = `translateX(${offset}px)`;
+      offsetRef.current = offset;
+      track.style.transform = `translate3d(${offset}px,0,0)`;
     };
 
-    const pauseAuto = () => {
-      resumeAt = performance.now() + PAUSE_MS;
-    };
-
-    const tick = (now) => {
-      const dt = (now - lastTime) / 1000;
-      lastTime = now;
-
-      if (hovering) {
-        if (Math.abs(steer) > 0) {
-          offset -= steer * MAX_STEER_SPEED * dt;
-          wrap();
-          apply();
-        }
-      } else if (now > resumeAt) {
-        offset -= AUTO_SPEED * dt;
-        wrap();
-        apply();
-      }
-
-      rafId = requestAnimationFrame(tick);
-    };
-
-    const onMouseEnter = () => {
-      hovering = true;
-    };
-
-    const onMouseLeave = () => {
-      hovering = false;
-      steer = 0;
-      pauseAuto();
-    };
-
-    const onMouseMove = (event) => {
-      const rect = carousel.getBoundingClientRect();
-      // -1 at the left edge, 0 at the center, 1 at the right edge.
-      const ratio = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-
-      if (Math.abs(ratio) <= DEAD_ZONE) {
-        steer = 0;
-        return;
-      }
-
-      // Rescale so the steering value ramps from 0 right past the dead
-      // zone up to 1 at the edge, instead of jumping straight to it.
-      const sign = ratio > 0 ? 1 : -1;
-      steer = sign * Math.min(1, (Math.abs(ratio) - DEAD_ZONE) / (1 - DEAD_ZONE));
-    };
-
-    measure();
-    apply();
-    rafId = requestAnimationFrame(tick);
-
-    carousel.addEventListener('mouseenter', onMouseEnter);
-    carousel.addEventListener('mouseleave', onMouseLeave);
-    carousel.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('resize', measure);
-
-    return () => {
-      cancelAnimationFrame(rafId);
-      carousel.removeEventListener('mouseenter', onMouseEnter);
-      carousel.removeEventListener('mouseleave', onMouseLeave);
-      carousel.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('resize', measure);
-    };
-  }, [leaders]);
-
-  // Touch devices: there's no hover to reveal a card's colour, so instead
-  // the card closest to the middle of the carousel "lights up" (full colour,
-  // green glow, slight lift) and hands over to its neighbour as the person
-  // swipes along. Toggles a class straight on the DOM node so scrolling
-  // never triggers a React re-render.
-  useEffect(() => {
-    const carousel = sectionRef.current?.querySelector('.leadership-carousel');
-    const track = trackRef.current;
-    if (!carousel || !track || !leaders.length) return;
-
-    const isTouchDevice = window.matchMedia(
-      '(hover: none) and (pointer: coarse)'
-    ).matches;
-    if (!isTouchDevice) return;
-
-    let rafId = 0;
-    let focused = null;
-
+    // Touch screens have no hover, so the card nearest the middle "lights up".
     const updateFocus = () => {
-      rafId = 0;
-      const rect = carousel.getBoundingClientRect();
-      const center = rect.left + rect.width / 2;
-
+      if (!isTouchDevice || !cardWidth) return;
+      const middle = -offset + carousel.clientWidth / 2;
       let best = null;
       let bestDistance = Infinity;
 
-      Array.from(track.children).forEach((card) => {
-        const box = card.getBoundingClientRect();
-        // Skip cards that are completely off-screen.
-        if (box.right < rect.left || box.left > rect.right) return;
-        const distance = Math.abs(box.left + box.width / 2 - center);
+      for (let i = 0; i < track.children.length; i += 1) {
+        const card = track.children[i];
+        const distance = Math.abs(
+          card.offsetLeft - firstLeft + cardWidth / 2 - middle
+        );
         if (distance < bestDistance) {
           bestDistance = distance;
           best = card;
         }
-      });
+      }
 
       if (best === focused) return;
       if (focused) focused.classList.remove('is-focused');
@@ -230,21 +182,165 @@ function Leadership() {
       focused = best;
     };
 
-    const scheduleUpdate = () => {
-      if (!rafId) rafId = requestAnimationFrame(updateFocus);
+    const pauseAuto = () => {
+      resumeAt = performance.now() + PAUSE_MS;
     };
 
+    const tick = (now) => {
+      rafId = requestAnimationFrame(tick);
+
+      const dt = Math.min((now - lastTime) / 1000, 0.05);
+      lastTime = now;
+
+      if (!onScreen || document.hidden || !setWidth || dragging) return;
+
+      let moved = false;
+
+      if (Math.abs(velocity) > 8) {
+        // momentum after a flick
+        offset += velocity * dt;
+        velocity *= Math.exp(-FRICTION * dt);
+        pauseAuto();
+        moved = true;
+      } else if (hovering) {
+        if (steer !== 0) {
+          offset -= steer * MAX_STEER_SPEED * dt;
+          moved = true;
+        }
+      } else if (now > resumeAt) {
+        offset -= AUTO_SPEED * dt;
+        moved = true;
+      }
+
+      if (moved) {
+        wrap();
+        apply();
+        updateFocus();
+      }
+    };
+
+    /* ----- mouse: steer by cursor position ----- */
+
+    const onPointerEnter = (event) => {
+      if (event.pointerType !== 'mouse') return;
+      hovering = true;
+    };
+
+    const onPointerLeave = (event) => {
+      if (event.pointerType !== 'mouse') return;
+      hovering = false;
+      steer = 0;
+      pauseAuto();
+    };
+
+    const onPointerMove = (event) => {
+      if (event.pointerType === 'mouse') {
+        const rect = carousel.getBoundingClientRect();
+        const ratio = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+
+        if (Math.abs(ratio) <= DEAD_ZONE) {
+          steer = 0;
+        } else {
+          const sign = ratio > 0 ? 1 : -1;
+          steer =
+            sign * Math.min(1, (Math.abs(ratio) - DEAD_ZONE) / (1 - DEAD_ZONE));
+        }
+        return;
+      }
+
+      /* ----- finger / pen: drag ----- */
+      if (!dragging) return;
+
+      const now = performance.now();
+      const dx = event.clientX - lastX;
+      const dtMs = Math.max(now - lastT, 1);
+
+      dragMoved += Math.abs(dx);
+      dragVelocity = 0.7 * dragVelocity + 0.3 * ((dx / dtMs) * 1000);
+      lastX = event.clientX;
+      lastT = now;
+
+      offset += dx;
+      wrap();
+      apply();
+      updateFocus();
+    };
+
+    const onPointerDown = (event) => {
+      if (event.pointerType === 'mouse') return;
+      dragging = true;
+      dragMoved = 0;
+      dragVelocity = 0;
+      velocity = 0;
+      suppressClick = false;
+      lastX = event.clientX;
+      lastT = performance.now();
+    };
+
+    const endDrag = () => {
+      if (!dragging) return;
+      dragging = false;
+
+      // a real drag must not count as a tap on a card (would open the modal)
+      if (dragMoved > 8) suppressClick = true;
+
+      velocity = Math.max(-3000, Math.min(3000, dragVelocity));
+      lastTime = performance.now();
+      pauseAuto();
+    };
+
+    const onClickCapture = (event) => {
+      if (!suppressClick) return;
+      suppressClick = false;
+      event.stopPropagation();
+      event.preventDefault();
+    };
+
+    const onResize = () => {
+      measure();
+      wrap();
+      apply();
+      updateFocus();
+    };
+
+    const intersection = new IntersectionObserver(([entry]) => {
+      onScreen = entry.isIntersecting;
+      lastTime = performance.now();
+    });
+    intersection.observe(carousel);
+
+    measure();
+    wrap();
+    apply();
     updateFocus();
-    carousel.addEventListener('scroll', scheduleUpdate, { passive: true });
-    window.addEventListener('resize', scheduleUpdate);
+    rafId = requestAnimationFrame(tick);
+
+    carousel.addEventListener('pointerenter', onPointerEnter);
+    carousel.addEventListener('pointerleave', onPointerLeave);
+    carousel.addEventListener('pointermove', onPointerMove);
+    carousel.addEventListener('pointerdown', onPointerDown);
+    carousel.addEventListener('pointerup', endDrag);
+    carousel.addEventListener('pointercancel', endDrag);
+    carousel.addEventListener('click', onClickCapture, true);
+    window.addEventListener('resize', onResize);
 
     return () => {
-      if (rafId) cancelAnimationFrame(rafId);
-      carousel.removeEventListener('scroll', scheduleUpdate);
-      window.removeEventListener('resize', scheduleUpdate);
+      cancelAnimationFrame(rafId);
+      intersection.disconnect();
+      carousel.removeEventListener('pointerenter', onPointerEnter);
+      carousel.removeEventListener('pointerleave', onPointerLeave);
+      carousel.removeEventListener('pointermove', onPointerMove);
+      carousel.removeEventListener('pointerdown', onPointerDown);
+      carousel.removeEventListener('pointerup', endDrag);
+      carousel.removeEventListener('pointercancel', endDrag);
+      carousel.removeEventListener('click', onClickCapture, true);
+      window.removeEventListener('resize', onResize);
       if (focused) focused.classList.remove('is-focused');
     };
-  }, [leaders]);
+  }, [leaders, copies, loaded]);
+
+  // Phone back gesture closes the leader popup
+  useBackClose(!!activeLeader, () => setActiveLeader(null));
 
   // Modal: lock page scroll and let Escape close it while it's open.
   useEffect(() => {
@@ -290,8 +386,11 @@ function Leadership() {
       </div>
 
       <div className="leadership-carousel">
-        <div className="leadership-track" ref={trackRef}>
-          {Array.from({ length: TRACK_COPIES }, (_, copy) =>
+        <div
+          className={`leadership-track ${loaded ? 'leadership-track-ready' : ''}`}
+          ref={trackRef}
+        >
+          {Array.from({ length: copies }, (_, copy) =>
             leaders.map((leader, index) => (
               <article
                 className="leader-card"
@@ -299,7 +398,11 @@ function Leadership() {
                 onClick={() => openLeader(leader)}
               >
                 <div className="leader-image">
-                  <img src={leader.image_url} alt={leader.name} />
+                  <img
+                    src={leader.image_url}
+                    alt={leader.name}
+                    draggable={false}
+                  />
                 </div>
 
                 <div className="leader-info">

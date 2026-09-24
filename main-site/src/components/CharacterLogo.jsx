@@ -33,12 +33,13 @@ function CharacterLogo({ active }) {
 
     const fontCache = new Map();
 
-    const fontFor = (size) => {
-      let font = fontCache.get(size);
+    const fontFor = (size, bold) => {
+      const key = bold ? `b${size}` : size;
+      let font = fontCache.get(key);
 
       if (!font) {
-        font = `${size}px "IBM Plex Mono", monospace`;
-        fontCache.set(size, font);
+        font = `${bold ? '700 ' : ''}${size}px "IBM Plex Mono", monospace`;
+        fontCache.set(key, font);
       }
 
       return font;
@@ -81,10 +82,10 @@ function CharacterLogo({ active }) {
       const isMobile = width < 700;
 
       const fontSize = isMobile
-        ? Math.min(width / 5.2, height * 0.72, 430)
+        ? Math.min(width / 4.2, height * 0.85, 430)
         : Math.min(width / 4.5, height * 1.0, 430);
 
-      maskCtx.font = `700 ${fontSize}px Arial`;
+      maskCtx.font = `900 ${fontSize}px Arial`;
       maskCtx.textAlign = 'center';
       maskCtx.textBaseline = 'middle';
       maskCtx.fillStyle = '#ffffff';
@@ -93,7 +94,7 @@ function CharacterLogo({ active }) {
       const data = maskCtx.getImageData(0, 0, width, height).data;
 
       const spacing = isMobile
-        ? Math.max(5, Math.round(fontSize / 22))
+        ? Math.max(5, Math.round(fontSize / 20))
         : Math.max(8, Math.round(fontSize / 38));
 
       particles = [];
@@ -108,8 +109,13 @@ function CharacterLogo({ active }) {
             offsetX: 0,
             offsetY: 0,
             // whole pixel sizes -> only a handful of distinct fonts
-            size: Math.round(spacing * 0.75 + Math.random() * spacing * 0.65),
-            opacity: 0.35 + Math.random() * 0.65,
+            size: isMobile
+              ? Math.round(spacing * 1.05 + Math.random() * spacing * 0.5)
+              : Math.round(spacing * 0.75 + Math.random() * spacing * 0.65),
+            // phones get a much brighter floor so the word stays readable
+            opacity: isMobile
+              ? 0.8 + Math.random() * 0.2
+              : 0.35 + Math.random() * 0.65,
             char: randomChar(),
             phase: Math.random() * Math.PI * 2,
             speed: 0.5 + Math.random() * 1.5,
@@ -138,6 +144,7 @@ function CharacterLogo({ active }) {
       const revealing = progress < 1;
 
       const mouse = mouseRef.current;
+      const bright = width < 700;
 
       let currentSize = -1;
       let pale = false;
@@ -177,7 +184,7 @@ function CharacterLogo({ active }) {
         }
 
         if (p.size !== currentSize) {
-          ctx.font = fontFor(p.size);
+          ctx.font = fontFor(p.size, bright);
           currentSize = p.size;
         }
 
@@ -186,7 +193,9 @@ function CharacterLogo({ active }) {
           pale = inZone;
         }
 
-        const flicker = 0.75 + Math.sin(time * 3 + p.phase) * 0.2;
+        const flicker = bright
+          ? 0.9 + Math.sin(time * 3 + p.phase) * 0.1
+          : 0.75 + Math.sin(time * 3 + p.phase) * 0.2;
 
         ctx.globalAlpha = inZone ? 0.95 : p.opacity * flicker;
 

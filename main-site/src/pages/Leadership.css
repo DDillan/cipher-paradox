@@ -218,6 +218,13 @@
 
   user-select: none;
 
+  /* Headroom for the hover/focus lift (-14px) and the green glow. The
+     carousel clips its overflow, so without this the top border of the
+     raised card was being cut off. The matching negative margin keeps the
+     page layout exactly where it was. */
+  padding-top: 48px;
+  margin-top: -48px;
+
   /* Fade the reel to transparent at both edges instead of cutting the
      cards off sharply. */
   --carousel-fade: 90px;
@@ -552,10 +559,10 @@
     touch-action: pan-x;
   }
 
-  /* Room for the focused card's lift and glow, which would otherwise be
-     clipped by the scroll container. */
+  /* Room for the focused card's lift and glow is already provided by the
+     base .leadership-carousel padding; just add a little at the bottom. */
   .leadership-carousel {
-    padding: 18px 0 8px;
+    padding-bottom: 8px;
   }
 
   /* The card nearest the centre of the carousel lights up as you swipe

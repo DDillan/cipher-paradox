@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import CharacterLogo from '../components/CharacterLogo';
+import useBackClose from '../lib/useBackClose';
 import './Home.css';
 
 const NAV_ITEMS = [
@@ -45,6 +46,9 @@ function Home({ active, onJoin }) {
   }, [menuOpen]);
 
   const closeMenu = () => setMenuOpen(false);
+
+  // Phone back gesture closes the open menu
+  useBackClose(menuOpen, closeMenu);
 
   return (
     <section
