@@ -289,6 +289,16 @@ function Leadership() {
       pauseAuto();
     };
 
+    // The browser took over the gesture (e.g. a vertical page scroll):
+    // stop dragging without adding any momentum to the carousel.
+    const cancelDrag = () => {
+      if (!dragging) return;
+      dragging = false;
+      dragVelocity = 0;
+      velocity = 0;
+      lastTime = performance.now();
+    };
+
     const onClickCapture = (event) => {
       if (!suppressClick) return;
       suppressClick = false;
@@ -320,7 +330,7 @@ function Leadership() {
     carousel.addEventListener('pointermove', onPointerMove);
     carousel.addEventListener('pointerdown', onPointerDown);
     carousel.addEventListener('pointerup', endDrag);
-    carousel.addEventListener('pointercancel', endDrag);
+    carousel.addEventListener('pointercancel', cancelDrag);
     carousel.addEventListener('click', onClickCapture, true);
     window.addEventListener('resize', onResize);
 
@@ -332,7 +342,7 @@ function Leadership() {
       carousel.removeEventListener('pointermove', onPointerMove);
       carousel.removeEventListener('pointerdown', onPointerDown);
       carousel.removeEventListener('pointerup', endDrag);
-      carousel.removeEventListener('pointercancel', endDrag);
+      carousel.removeEventListener('pointercancel', cancelDrag);
       carousel.removeEventListener('click', onClickCapture, true);
       window.removeEventListener('resize', onResize);
       if (focused) focused.classList.remove('is-focused');

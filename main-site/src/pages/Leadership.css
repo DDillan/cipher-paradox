@@ -539,24 +539,20 @@
   }
 }
 
-/* Touch devices: let the carousel scroll natively by finger instead of
-   relying on the cursor-steering JS (which only runs on hover-capable
-   pointers — see Leadership.jsx). */
+/* Touch devices: the JS engine in Leadership.jsx handles horizontal finger
+   drags (with momentum) by moving the track with a transform. The browser
+   is only asked to handle VERTICAL panning (touch-action: pan-y), so
+   swiping up/down over the carousel scrolls the page as normal, while
+   swiping left/right drags the carousel. No native overflow scrolling here,
+   otherwise it would fight with the JS engine. */
 @media (hover: none) and (pointer: coarse) {
   .leadership-carousel {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-x;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-
-  .leadership-carousel::-webkit-scrollbar {
-    display: none;
+    overflow: hidden;
+    touch-action: pan-y;
   }
 
   .leadership-track {
-    touch-action: pan-x;
+    touch-action: pan-y;
   }
 
   /* Room for the focused card's lift and glow is already provided by the
